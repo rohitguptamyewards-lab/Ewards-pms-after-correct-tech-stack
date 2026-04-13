@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: ewards-pms-basic
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: "eWards PMS Basic"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        value: "https://ewards-pms-basic.onrender.com"
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: SESSION_ENCRYPT
+        value: "true"
+      - key: CACHE_STORE
+        value: database
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: PORT
+        value: "10000"
+      - key: MAIL_MAILER
+        value: brevo
+      - key: MAIL_FROM_ADDRESS
+        value: "project.tool.ewards@gmail.com"
+      - key: MAIL_FROM_NAME
+        value: "eWards PMS"
+      - key: BREVO_API_KEY
+        sync: false

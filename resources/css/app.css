@@ -1,0 +1,94 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../**/*.vue';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-ew-primary: #4e1a77;
+    --color-ew-primary-dark: #3d1560;
+    --color-ew-sidebar: #2c0f47;
+    --color-ew-bg: #f8f4fa;
+    --color-ew-highlight: #e8ddf0;
+    --color-ew-border: #d9cce6;
+};
+
+/* ── Dark Mode ── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+    color-scheme: dark;
+}
+
+.dark .rounded-xl,
+.dark .rounded-lg,
+.dark .bg-white,
+.dark table {
+    background-color: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+    background-color: #111827 !important;
+}
+
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+    color: #f3f4f6 !important;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500 {
+    color: #9ca3af !important;
+}
+
+.dark .text-gray-400 {
+    color: #6b7280 !important;
+}
+
+.dark .border-gray-200,
+.dark .border-gray-100,
+.dark .border-gray-300 {
+    border-color: #374151 !important;
+}
+
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #374151 !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f3f4f6 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #6b7280 !important;
+}
+
+.dark .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark thead {
+    background-color: #111827 !important;
+}
+
+.dark .hover\:bg-\[\#f5f0ff\]\/30:hover,
+.dark .hover\:bg-\[\#f5f0ff\]\/20:hover {
+    background-color: rgba(78, 26, 119, 0.1) !important;
+}
+
+@media print {
+    nav, aside, .sidebar { display: none !important; }
+    main { margin-left: 0 !important; width: 100% !important; }
+}
