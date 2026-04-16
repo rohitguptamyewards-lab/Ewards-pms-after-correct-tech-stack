@@ -12,6 +12,7 @@ defineOptions({ layout: AppLayout });
 const props = defineProps({
     members: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
+    managers: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -22,6 +23,7 @@ const isAdmin = computed(() => ['manager', 'analyst_head'].includes(role.value))
 const filterForm = ref({
     search: props.filters?.search || '',
     role: props.filters?.role || '',
+    employee_type: props.filters?.employee_type || '',
     is_active: props.filters?.is_active ?? '',
 });
 
@@ -32,7 +34,7 @@ function applyFilters() {
 }
 
 function clearFilters() {
-    filterForm.value = { search: '', role: '', is_active: '' };
+    filterForm.value = { search: '', role: '', employee_type: '', is_active: '' };
     router.get('/team-members', {}, { preserveState: true, replace: true });
 }
 
@@ -46,12 +48,17 @@ function startEdit(member) {
         name: member.name,
         email: member.email,
         role: member.role,
+        employee_type: member.employee_type || 'technical',
+        manager_id: member.manager_id ? String(member.manager_id) : '',
     };
 }
 
 async function saveEdit(member) {
     try {
-        await axios.put(`/api/v1/team-members/${member.id}`, editForm.value);
+        await axios.put(`/api/v1/team-members/${member.id}`, {
+            ...editForm.value,
+            manager_id: editForm.value.manager_id || null,
+        });
         editingId.value = null;
         router.reload({ only: ['members'] });
     } catch (e) {
@@ -108,9 +115,26 @@ const roleColors = {
     employee: 'bg-gray-100 text-gray-600',
 };
 
+const employeeTypeColors = {
+    technical: 'bg-emerald-100 text-emerald-700',
+    non_technical: 'bg-amber-100 text-amber-700',
+};
+
 function formatDate(d) {
     if (!d) return '';
     return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatLabel(value) {
+    if (!value) return '';
+    return value
+        .split('_')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+}
+
+function managerChoices(memberId) {
+    return (props.managers || []).filter(manager => manager.id !== memberId);
 }
 </script>
 
@@ -155,6 +179,14 @@ function formatDate(d) {
                     </select>
                 </div>
                 <div>
+                    <label class="text-xs font-medium text-gray-500 mb-1 block">Employee Type</label>
+                    <select v-model="filterForm.employee_type" @change="applyFilters" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#4e1a77] focus:ring-1 focus:ring-[#4e1a77]">
+                        <option value="">All Types</option>
+                        <option value="technical">Technical</option>
+                        <option value="non_technical">Non Technical</option>
+                    </select>
+                </div>
+                <div>
                     <label class="text-xs font-medium text-gray-500 mb-1 block">Status</label>
                     <select v-model="filterForm.is_active" @change="applyFilters" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#4e1a77] focus:ring-1 focus:ring-[#4e1a77]">
                         <option value="">All</option>
@@ -194,6 +226,8 @@ function formatDate(d) {
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Member</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Role</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Employee Type</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Reporting Manager</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Projects</th>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Total Hours</th>
@@ -235,7 +269,37 @@ function formatDate(d) {
                                 </select>
                             </template>
                             <template v-else>
-                                <span :class="roleColors[m.role] || 'bg-gray-100 text-gray-600'" class="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase">{{ m.role }}</span>
+                                <span :class="roleColors[m.role] || 'bg-gray-100 text-gray-600'" class="rounded-full px-2.5 py-0.5 text-[10px] font-semibold">
+                                    {{ formatLabel(m.role) }}
+                                </span>
+                            </template>
+                        </td>
+                        <!-- Employee Type -->
+                        <td class="px-4 py-3">
+                            <template v-if="editingId === m.id">
+                                <select v-model="editForm.employee_type" class="rounded border border-[#4e1a77] px-2 py-1 text-xs focus:ring-1 focus:ring-[#4e1a77]">
+                                    <option value="technical">Technical</option>
+                                    <option value="non_technical">Non Technical</option>
+                                </select>
+                            </template>
+                            <template v-else>
+                                <span :class="employeeTypeColors[m.employee_type] || 'bg-gray-100 text-gray-600'" class="rounded-full px-2.5 py-0.5 text-[10px] font-semibold">
+                                    {{ formatLabel(m.employee_type || 'technical') }}
+                                </span>
+                            </template>
+                        </td>
+                        <!-- Reporting Manager -->
+                        <td class="px-4 py-3">
+                            <template v-if="editingId === m.id">
+                                <select v-model="editForm.manager_id" class="min-w-[160px] rounded border border-[#4e1a77] px-2 py-1 text-xs focus:ring-1 focus:ring-[#4e1a77]">
+                                    <option value="">No manager</option>
+                                    <option v-for="manager in managerChoices(m.id)" :key="manager.id" :value="String(manager.id)">
+                                        {{ manager.name }}
+                                    </option>
+                                </select>
+                            </template>
+                            <template v-else>
+                                <span class="text-sm text-gray-700">{{ m.manager_name || '-' }}</span>
                             </template>
                         </td>
                         <!-- Status -->
@@ -250,7 +314,7 @@ function formatDate(d) {
                         <!-- Hours -->
                         <td class="px-4 py-3 text-sm text-gray-600">{{ hoursDisplay(m.total_hours) }}</td>
                         <!-- Joined -->
-                        <td class="px-4 py-3 text-xs text-gray-500">{{ formatDate(m.created_at) }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-500">{{ formatDate(m.joined_date || m.created_at) }}</td>
                         <!-- Actions -->
                         <td v-if="isAdmin" class="px-4 py-3">
                             <template v-if="editingId === m.id">

@@ -5,11 +5,17 @@ import { Head, Link, router } from '@inertiajs/vue3';
 
 defineOptions({ layout: AppLayout });
 
+const props = defineProps({
+    managers: { type: Array, default: () => [] },
+});
+
 const form = ref({
     name: '',
     email: '',
     password: '',
     role: 'employee',
+    employee_type: 'technical',
+    manager_id: '',
     joined_date: '',
 });
 
@@ -26,8 +32,18 @@ const roleOptions = [
     { value: 'employee',         label: 'Employee',         description: 'Basic access - view assigned projects, log work' },
 ];
 
+const employeeTypeOptions = [
+    { value: 'technical', label: 'Technical', description: 'Engineering or delivery-focused team member' },
+    { value: 'non_technical', label: 'Non Technical', description: 'Operations, coordination, support, or non-delivery team member' },
+];
+
 const currentRoleDescription = computed(() => {
     const match = roleOptions.find(r => r.value === form.value.role);
+    return match || null;
+});
+
+const currentEmployeeTypeDescription = computed(() => {
+    const match = employeeTypeOptions.find(type => type.value === form.value.employee_type);
     return match || null;
 });
 
@@ -40,7 +56,11 @@ async function submit() {
     submitting.value = true;
 
     try {
-        router.post('/team-members', form.value, {
+        router.post('/team-members', {
+            ...form.value,
+            joined_date: form.value.joined_date || null,
+            manager_id: form.value.manager_id || null,
+        }, {
             onError: (errs) => {
                 errors.value = errs;
             },
@@ -146,25 +166,65 @@ async function submit() {
                 </div>
 
                 <!-- Role -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Role <span class="text-red-500">*</span></label>
+                        <select
+                            v-model="form.role"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#4e1a77] focus:ring-1 focus:ring-[#4e1a77] outline-none"
+                        >
+                            <option v-for="role in roleOptions" :key="role.value" :value="role.value">
+                                {{ role.label }}
+                            </option>
+                        </select>
+                        <p v-if="errors.role" class="mt-1 text-xs text-red-600">{{ errors.role }}</p>
+
+                        <div v-if="currentRoleDescription" class="mt-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-500">
+                            <p>
+                                <strong class="text-[#4e1a77]">{{ currentRoleDescription.label }}</strong>
+                                &mdash; {{ currentRoleDescription.description }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Employee Type <span class="text-red-500">*</span></label>
+                        <select
+                            v-model="form.employee_type"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#4e1a77] focus:ring-1 focus:ring-[#4e1a77] outline-none"
+                        >
+                            <option v-for="type in employeeTypeOptions" :key="type.value" :value="type.value">
+                                {{ type.label }}
+                            </option>
+                        </select>
+                        <p v-if="errors.employee_type" class="mt-1 text-xs text-red-600">{{ errors.employee_type }}</p>
+
+                        <div v-if="currentEmployeeTypeDescription" class="mt-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-500">
+                            <p>
+                                <strong class="text-[#4e1a77]">{{ currentEmployeeTypeDescription.label }}</strong>
+                                &mdash; {{ currentEmployeeTypeDescription.description }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reporting Manager -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Role <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Reporting Manager</label>
                     <select
-                        v-model="form.role"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#4e1a77] focus:ring-1 focus:ring-[#4e1a77] outline-none"
+                        v-model="form.manager_id"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-[#4e1a77] focus:ring-1 focus:ring-[#4e1a77] outline-none disabled:bg-gray-50"
+                        :disabled="!props.managers.length"
                     >
-                        <option v-for="role in roleOptions" :key="role.value" :value="role.value">
-                            {{ role.label }}
+                        <option value="">Select manager</option>
+                        <option v-for="manager in props.managers" :key="manager.id" :value="String(manager.id)">
+                            {{ manager.name }} ({{ manager.role.replace('_', ' ') }})
                         </option>
                     </select>
-                    <p v-if="errors.role" class="mt-1 text-xs text-red-600">{{ errors.role }}</p>
-
-                    <!-- Role Description -->
-                    <div v-if="currentRoleDescription" class="mt-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-500">
-                        <p>
-                            <strong class="text-[#4e1a77]">{{ currentRoleDescription.label }}</strong>
-                            &mdash; {{ currentRoleDescription.description }}
-                        </p>
-                    </div>
+                    <p v-if="errors.manager_id" class="mt-1 text-xs text-red-600">{{ errors.manager_id }}</p>
+                    <p class="mt-1 text-xs text-gray-400">
+                        Leave blank only if this member does not report to a manager in the system.
+                    </p>
                 </div>
 
                 <!-- Actions -->

@@ -14,7 +14,7 @@ class TeamMember extends Authenticatable
     protected $table = 'team_members';
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'is_active',
+        'name', 'email', 'password', 'role', 'employee_type', 'manager_id', 'is_active',
     ];
 
     protected $hidden = [
@@ -24,9 +24,20 @@ class TeamMember extends Authenticatable
     protected function casts(): array
     {
         return [
-            'role'      => Role::class,
-            'is_active' => 'boolean',
-            'password'  => 'hashed',
+            'role'          => Role::class,
+            'manager_id'    => 'integer',
+            'is_active'     => 'boolean',
+            'password'      => 'hashed',
         ];
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(self::class, 'manager_id');
+    }
+
+    public function reportees()
+    {
+        return $this->hasMany(self::class, 'manager_id');
     }
 }
